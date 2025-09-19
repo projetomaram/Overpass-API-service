@@ -1,0 +1,25 @@
+FROM ubuntu:22.04
+
+ENV EXEC_DIR=/OP_API/
+COPY ./000-default.conf .
+
+RUN apt-get update && \
+    apt-get install -y apache2 && \
+    apt-get install -y net-tools nano systemd curl wget g++ make expat libexpat1-dev zlib1g-dev && \
+    wget http://dev.overpass-api.de/releases/osm-3s_latest.tar.gz && \
+    tar -zxvf osm-3s_latest.tar.gz && \
+    rm osm-3s_latest.tar.gz && \
+    mkdir OP_API && \
+    cd osm* && \
+    ./configure CXXFLAGS="-O2" --prefix=$EXEC_DIR && \
+    make install && \
+    a2enmod cgi ext_filter headers && \
+    cp -f /000-default.conf /etc/apache2/sites-available/ && \
+    service apache2 start 
+
+COPY ./start.sh .
+RUN chmod +x /start.sh
+
+EXPOSE 80
+
+CMD ["/start.sh"]

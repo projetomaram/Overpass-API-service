@@ -1,0 +1,34 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    g++ \
+    make \
+    git \
+    osmctools \
+    wget \
+    zlib1g-dev \
+    libexpat1-dev \
+    bzip2 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV OVERPASS_VERSION="latest"
+WORKDIR /usr/local/src
+RUN wget http://dev.overpass-api.de/releases/osm-3s_${OVERPASS_VERSION}.tar.gz && \
+    tar xvf osm-3s_${OVERPASS_VERSION}.tar.gz && \
+    rm osm-3s_${OVERPASS_VERSION}.tar.gz && \
+    mv osm-3s_v* overpass && \
+    cd overpass && \
+    ./configure && \
+    make
+
+RUN chmod +x /usr/local/src/overpass/bin/*.sh
+
+RUN mkdir -p /overpass/data /overpass/db
+
+COPY run.sh /usr/local/bin/run_import.sh
+
+RUN chmod +x /usr/local/bin/run_import.sh
+
+ENTRYPOINT ["/usr/local/bin/run_import.sh"]
